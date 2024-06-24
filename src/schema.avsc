@@ -1,0 +1,6 @@
+{
+    "type": "record",
+    "name": "Message",
+    "namespace": "examples",
+    "fields": [{ "type": "int", "name": "count" }]
+}

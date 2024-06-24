@@ -1,0 +1,330 @@
+---
+version: '3'
+services:
+  zookeeper-1:
+    image: confluentinc/cp-zookeeper
+    hostname: zookeeper-1
+    container_name: zookeeper-1
+    volumes:
+        - ./secrets/zookeeper-1:/security:ro
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SECURE_CLIENT_PORT: 2281
+      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+      ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
+      ZOOKEEPER_SSL_QUORUM: "true"
+      ZOOKEEPER_SSL_QUORUM_HOSTNAME_VERIFICATION: "false"
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /security/kafka.zookeeper-1.keystore.jks
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /security/kafka.zookeeper-1.truststore.jks
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_HOSTNAME_VERIFICATION: "false"
+      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /security/kafka.zookeeper-1.keystore.jks
+      ZOOKEEPER_SSL_KEYSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /security/kafka.zookeeper-1.truststore.jks
+      ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: password
+
+  zookeeper-2:
+    image: confluentinc/cp-zookeeper
+    hostname: zookeeper-2
+    container_name: zookeeper-2
+    volumes:
+        - ./secrets/zookeeper-2:/security:ro
+    environment:
+      ZOOKEEPER_SERVER_ID: 2
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SECURE_CLIENT_PORT: 2281
+      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+      ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
+      ZOOKEEPER_SSL_QUORUM: "true"
+      ZOOKEEPER_SSL_QUORUM_HOSTNAME_VERIFICATION: "false"
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /security/kafka.zookeeper-2.keystore.jks
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /security/kafka.zookeeper-2.truststore.jks
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_HOSTNAME_VERIFICATION: "false"
+      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /security/kafka.zookeeper-2.keystore.jks
+      ZOOKEEPER_SSL_KEYSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /security/kafka.zookeeper-2.truststore.jks
+      ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: password
+
+  zookeeper-3:
+    image: confluentinc/cp-zookeeper
+    hostname: zookeeper-3
+    container_name: zookeeper-3
+    volumes:
+        - ./secrets/zookeeper-3:/security:ro
+    environment:
+      ZOOKEEPER_SERVER_ID: 3
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SECURE_CLIENT_PORT: 2281
+      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+      ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
+      ZOOKEEPER_SSL_QUORUM: "true"
+      ZOOKEEPER_SSL_QUORUM_HOSTNAME_VERIFICATION: "false"
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /security/kafka.zookeeper-3.keystore.jks
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /security/kafka.zookeeper-3.truststore.jks
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_HOSTNAME_VERIFICATION: "false"
+      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /security/kafka.zookeeper-3.keystore.jks
+      ZOOKEEPER_SSL_KEYSTORE_PASSWORD: password
+      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /security/kafka.zookeeper-3.truststore.jks
+      ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: password
+
+
+  broker-1:
+    image: confluentinc/cp-server:7.6.1
+    hostname: broker-1
+    container_name: broker-1
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    ports:
+      - "9091:9091"
+      - "9191:9191"
+      - "9101:9101"
+    volumes:
+      - ./secrets/broker-1:/etc/kafka/secrets:ro
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-1:2281,zookeeper-2:2281,zookeeper-3:2281'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9091,SSL://broker-1:9191
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: broker-1
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:7070
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker-1:9191,broker-2:9192,broker-3:9193
+      CONFLUENT_METRICS_REPORTER_SECURITY_PROTOCOL: SSL
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-1.keystore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_SSL_KEY_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-1.truststore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_MAX_REQUEST_SIZE: 10485760
+      # To avoid race condition with control-center
+      CONFLUENT_METRICS_REPORTER_TOPIC_CREATE: 'false'
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+
+      KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: "true"
+      KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-1.keystore.jks
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD: password
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-1.truststore.jks
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: password
+
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.broker-1.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: broker-1_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: broker-1_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.broker-1.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: broker-1_truststore_creds
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+
+  broker-2:
+    image: confluentinc/cp-server:7.6.1
+    hostname: broker-2
+    container_name: broker-2
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    ports:
+      - "9092:9092"
+      - "9192:9192"
+      - "9102:9102"
+    volumes:
+      - ./secrets/broker-2:/etc/kafka/secrets:ro
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-1:2281,zookeeper-2:2281,zookeeper-3:2281'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-2:9092,SSL://broker-2:9192
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9102
+      KAFKA_JMX_HOSTNAME: broker-2
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:7070
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker-1:9191,broker-2:9192,broker-3:9193
+      CONFLUENT_METRICS_REPORTER_SECURITY_PROTOCOL: SSL
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-2.keystore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_SSL_KEY_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-2.truststore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_MAX_REQUEST_SIZE: 10485760
+      # To avoid race condition with control-center
+      CONFLUENT_METRICS_REPORTER_TOPIC_CREATE: 'false'
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+
+      KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: "true"
+      KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-2.keystore.jks
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD: password
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-2.truststore.jks
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: password
+
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.broker-2.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: broker-2_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: broker-2_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.broker-2.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: broker-2_truststore_creds
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+
+  broker-3:
+    image: confluentinc/cp-server:7.6.1
+    hostname: broker-3
+    container_name: broker-3
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+    ports:
+      - "9093:9093"
+      - "9193:9193"
+      - "9103:9103"
+    volumes:
+      - ./secrets/broker-3:/etc/kafka/secrets:ro
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-1:2281,zookeeper-2:2281,zookeeper-3:2281'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SSL:SSL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-3:9093,SSL://broker-3:9193
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9103
+      KAFKA_JMX_HOSTNAME: broker-3
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:7070
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker-1:9191,broker-2:9192,broker-3:9193
+      CONFLUENT_METRICS_REPORTER_SECURITY_PROTOCOL: SSL
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-3.keystore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_SSL_KEY_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-3.truststore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: password
+      CONFLUENT_METRICS_REPORTER_MAX_REQUEST_SIZE: 10485760
+      # To avoid race condition with control-center
+      CONFLUENT_METRICS_REPORTER_TOPIC_CREATE: 'false'
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+
+      KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: "true"
+      KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-3.keystore.jks
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD: password
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.broker-3.truststore.jks
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: password
+
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.broker-3.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: broker-3_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: broker-3_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.broker-3.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: broker-3_truststore_creds
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.1
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+    ports:
+      - "7070:7070"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker-1:9091,broker-2:9092,broker-3:9093'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:7070
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:7.6.1
+    hostname: control-center
+    container_name: control-center
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - schema-registry
+    ports:
+      - "9021:9021"
+    volumes:
+      - ./secrets/control-center:/etc/kafka/secrets:ro
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker-1:9191,broker-2:9192,broker-3:9193'
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:7070"
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_STREAMS_SECURITY_PROTOCOL: SSL
+      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.control-center.truststore.jks
+      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_PASSWORD: password
+      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.control-center.keystore.jks
+      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_PASSWORD: password
+      CONTROL_CENTER_STREAMS_SSL_KEY_PASSWORD: password
+      PORT: 9021
+
+  producer:
+    build: ./src
+    hostname: producer
+    container_name: producer
+    volumes:
+      - "./secrets/ca.crt:/secrets/ca.crt:ro"
+      - "./secrets/producer:/secrets/producer:ro"
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+      - broker-1
+      - broker-2
+      - broker-3
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    command: "producer.js"
+
+  consumer:
+    build: ./src
+    hostname: consumer
+    container_name: consumer
+    volumes:
+      - "./secrets/ca.crt:/secrets/ca.crt:ro"
+      - "./secrets/consumer:/secrets/consumer:ro"
+    depends_on:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
+      - broker-1
+      - broker-2
+      - broker-3
+      - producer
+    environment:
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    command: "consumer.js"
+
